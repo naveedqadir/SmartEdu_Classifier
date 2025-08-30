@@ -7,7 +7,10 @@ Virtual environment: this repo assumes a virtual environment already exists at `
 Quick start (PowerShell):
 
 ```powershell
-# Activate the existing venv
+# Create a venv
+python3 -m venv .venv
+
+# Activate the venv
 .\.venv\Scripts\Activate.ps1
 
 # Install dependencies (if not already installed)
