@@ -35,9 +35,8 @@ def load_artifacts(path=DEFAULT_MODEL):
 
 def main():
     parser = argparse.ArgumentParser(description='Predict student performance using saved model artifacts.')
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--input', '-i', help='CSV file with rows to predict (columns: MST_Score,Quiz_Avg,Attendance,Assignment_Score)')
-    group.add_argument('--single', action='store_true', help='Provide a single sample via numeric flags')
+    # --input is optional; if not provided we will infer single-sample mode when all numeric flags are present.
+    parser.add_argument('--input', '-i', help='CSV file with rows to predict (columns: MST_Score,Quiz_Avg,Attendance,Assignment_Score)')
     parser.add_argument('--output', '-o', default=os.path.join('outputs', 'predictions.csv'), help='Output CSV path')
     # single sample args
     parser.add_argument('--mst', type=float, help='MST score for single sample')
@@ -51,17 +50,31 @@ def main():
     artifacts = load_artifacts(args.model)
 
     if args.input:
-        df = pd.read_csv(args.input)
+        # Try the provided path; if it doesn't exist, try resolving relative to this script and project root
+        input_path = args.input
+        if not os.path.exists(input_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            # candidate: path relative to src/ (script dir)
+            cand1 = os.path.normpath(os.path.join(script_dir, args.input))
+            # candidate: path relative to project root (one level up from src)
+            cand2 = os.path.normpath(os.path.join(script_dir, '..', args.input))
+            if os.path.exists(cand1):
+                input_path = cand1
+            elif os.path.exists(cand2):
+                input_path = cand2
+            else:
+                raise FileNotFoundError(f"Input file not found at '{args.input}'. Tried: cwd, {cand1}, {cand2}")
+
+        df = pd.read_csv(input_path)
         out = predict_dataframe(artifacts, df)
         os.makedirs(os.path.dirname(args.output) or '.', exist_ok=True)
         out.to_csv(args.output, index=False)
         print(f'Predictions saved to {args.output} (rows={len(out)})')
     else:
-        # single sample mode
-        required = ['mst', 'quiz', 'attendance', 'assignment']
+        # single sample mode (inferred if all numeric flags provided)
         values = [args.mst, args.quiz, args.attendance, args.assignment]
         if any(v is None for v in values):
-            parser.error('When using --single you must provide --mst, --quiz, --attendance and --assignment')
+            parser.error('Provide --input or all numeric flags: --mst, --quiz, --attendance, --assignment')
         df = pd.DataFrame([{
             'MST_Score': args.mst,
             'Quiz_Avg': args.quiz,
