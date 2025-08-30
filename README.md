@@ -8,7 +8,7 @@ Quick start (PowerShell):
 
 ```powershell
 # Clone this repo by using the terminal
-git clone https://github.com/naveedqadir/SmartEdu_Classifier
+git clone https://github.com/naveedqadir/SmartEdu_Classifier.git
 
 # Change to the cloned directory
 cd SmartEdu_Classifier
