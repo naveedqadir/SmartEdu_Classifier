@@ -7,6 +7,12 @@ Virtual environment: this repo assumes a virtual environment already exists at `
 Quick start (PowerShell):
 
 ```powershell
+# Clone this repo by using the terminal
+git clone https://github.com/naveedqadir/SmartEdu_Classifier
+
+# Change to the cloned directory
+cd SmartEdu_Classifier
+
 # Create a venv
 python3 -m venv .venv
 
