@@ -38,6 +38,7 @@ def main():
     # --input is optional; if not provided we will infer single-sample mode when all numeric flags are present.
     parser.add_argument('--input', '-i', help='CSV file with rows to predict (columns: MST_Score,Quiz_Avg,Attendance,Assignment_Score)')
     parser.add_argument('--output', '-o', default=os.path.join('outputs', 'predictions.csv'), help='Output CSV path')
+    parser.add_argument('--proba', action='store_true', help='Include class probabilities in output (if supported)')
     # single sample args
     parser.add_argument('--mst', type=float, help='MST score for single sample')
     parser.add_argument('--quiz', type=float, help='Quiz average for single sample')
@@ -67,6 +68,11 @@ def main():
 
         df = pd.read_csv(input_path)
         out = predict_dataframe(artifacts, df)
+        if args.proba and hasattr(artifacts['model'], 'predict_proba'):
+            proba = artifacts['model'].predict_proba(pd.DataFrame(artifacts['scaler'].transform(artifacts['imputer'].transform(df[['MST_Score','Quiz_Avg','Attendance','Assignment_Score']])), columns=['MST_Score','Quiz_Avg','Attendance','Assignment_Score']))
+            classes = artifacts['label_encoder'].inverse_transform(range(proba.shape[1]))
+            for i, cls in enumerate(classes):
+                out[f'P_{cls}'] = proba[:, i]
         os.makedirs(os.path.dirname(args.output) or '.', exist_ok=True)
         out.to_csv(args.output, index=False)
         print(f'Predictions saved to {args.output} (rows={len(out)})')
@@ -82,6 +88,13 @@ def main():
             'Assignment_Score': args.assignment
         }])
         out = predict_dataframe(artifacts, df)
+        if args.proba and hasattr(artifacts['model'], 'predict_proba'):
+            X_imp = pd.DataFrame(artifacts['imputer'].transform(df[['MST_Score','Quiz_Avg','Attendance','Assignment_Score']]), columns=['MST_Score','Quiz_Avg','Attendance','Assignment_Score'])
+            X_scaled = pd.DataFrame(artifacts['scaler'].transform(X_imp), columns=['MST_Score','Quiz_Avg','Attendance','Assignment_Score'])
+            proba = artifacts['model'].predict_proba(X_scaled)
+            classes = artifacts['label_encoder'].inverse_transform(range(proba.shape[1]))
+            for i, cls in enumerate(classes):
+                out[f'P_{cls}'] = proba[:, i]
         print(out.to_string(index=False))
 
 
