@@ -44,7 +44,7 @@ python3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
 # Install dependencies (if not already installed)
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 
 # Generate dataset
 python src/generate_dataset.py
